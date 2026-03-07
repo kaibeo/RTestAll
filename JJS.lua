@@ -1,4 +1,4 @@
--- Jujutsu Shenanigans Auto PvP Farm FULL
+-- Jujutsu Shenanigans Auto PvP Farm (Fly Speed 80)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,12 +10,12 @@ local Character
 local HRP
 local Target
 
-local Smooth = 0.25
+local FlySpeed = 80
 
 local LastPos
 local StuckTime = 0
 
-------------------------------------------------
+-------------------------------------------------
 
 local function press(key)
 
@@ -29,7 +29,7 @@ local function press(key)
 
 end
 
-------------------------------------------------
+-------------------------------------------------
 
 local function M1()
 
@@ -43,7 +43,7 @@ local function M1()
 
 end
 
-------------------------------------------------
+-------------------------------------------------
 
 -- SMART FIND PLAYER
 
@@ -81,14 +81,14 @@ local function GetTarget()
 
 end
 
-------------------------------------------------
+-------------------------------------------------
 
 local function SetupCharacter(char)
 
     Character = char
     HRP = char:WaitForChild("HumanoidRootPart")
 
-    -- Noclip xuyên tường
+    -- noclip xuyên tường
 
     RunService.Stepped:Connect(function()
 
@@ -109,7 +109,7 @@ local function SetupCharacter(char)
 
 end
 
-------------------------------------------------
+-------------------------------------------------
 
 LocalPlayer.CharacterAdded:Connect(function(char)
 
@@ -125,13 +125,15 @@ if LocalPlayer.Character then
     SetupCharacter(LocalPlayer.Character)
 end
 
-------------------------------------------------
+-------------------------------------------------
 
 RunService.Heartbeat:Connect(function()
 
     if not HRP then return end
 
-    -- Anti stuck
+    -------------------------------------------------
+
+    -- Anti Stuck
 
     if LastPos then
 
@@ -163,9 +165,9 @@ RunService.Heartbeat:Connect(function()
 
     LastPos = HRP.Position
 
-    ------------------------------------------------
+    -------------------------------------------------
 
-    -- target chết
+    -- Target chết
 
     if Target
     and Target.Character
@@ -176,7 +178,7 @@ RunService.Heartbeat:Connect(function()
 
     end
 
-    ------------------------------------------------
+    -------------------------------------------------
 
     -- tìm player
 
@@ -200,21 +202,20 @@ RunService.Heartbeat:Connect(function()
         return
     end
 
-    local dist = (HRP.Position - enemyHRP.Position).Magnitude
-
-    ------------------------------------------------
+    -------------------------------------------------
 
     -- bay ra sau lưng
 
     local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
 
-    HRP.CFrame = HRP.CFrame:Lerp(behind,Smooth)
+    local direction = (behind.Position - HRP.Position).Unit
+    HRP.Velocity = direction * FlySpeed
 
     HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
 
-    ------------------------------------------------
+    -------------------------------------------------
 
-    -- combo
+    local dist = (HRP.Position - enemyHRP.Position).Magnitude
 
     if dist <= 5 then
 
