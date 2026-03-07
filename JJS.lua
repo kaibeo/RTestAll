@@ -1,129 +1,10 @@
--- Jujutsu Shenanigans Auto PvP FULL
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local VIM = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
-
-local Character
-local HRP
-local Target
-
-local FlySpeed = 80
-
-local LastPos
-local StuckTime = 0
-local attacking = false
+local Camera = workspace.CurrentCamera
 
 ------------------------------------------------
-
-local function press(key)
-
-    VIM:SendKeyEvent(true,key,false,game)
-    task.wait(0.05)
-    VIM:SendKeyEvent(false,key,false,game)
-
-end
-
-------------------------------------------------
-
--- Smooth M1
-
-local function M1()
-
-    if attacking then return end
-    attacking = true
-
-    VIM:SendMouseButtonEvent(0,0,0,true,game,0)
-    task.wait(0.05)
-    VIM:SendMouseButtonEvent(0,0,0,false,game,0)
-
-    task.wait(0.12)
-
-    attacking = false
-
-end
-
-------------------------------------------------
-
--- Smart Find Player
-
-local function GetTarget()
-
-    if not HRP then return nil end
-
-    local nearest
-    local shortest = math.huge
-
-    for _,player in ipairs(Players:GetPlayers()) do
-
-        if player ~= LocalPlayer then
-
-            local char = player.Character
-            local hum = char and char:FindFirstChildOfClass("Humanoid")
-            local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-            if char and hum and hrp and hum.Health > 0 then
-
-                local dist = (HRP.Position - hrp.Position).Magnitude
-
-                if dist < shortest then
-                    shortest = dist
-                    nearest = player
-                end
-
-            end
-
-        end
-
-    end
-
-    return nearest
-
-end
-
-------------------------------------------------
-
--- Character Setup
-
-local function SetupCharacter(char)
-
-    Character = char
-    HRP = char:WaitForChild("HumanoidRootPart")
-
-    RunService.Stepped:Connect(function()
-
-        for _,v in ipairs(Character:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
-                v.Massless = true
-            end
-        end
-
-    end)
-
-end
-
-------------------------------------------------
-
-LocalPlayer.CharacterAdded:Connect(function(char)
-
-    task.wait(1)
-
-    SetupCharacter(char)
-
-    Target = nil
-
-end)
-
-if LocalPlayer.Character then
-    SetupCharacter(LocalPlayer.Character)
-end
-
-------------------------------------------------
-
--- ESP SYSTEM
 
 local function CreateESP(player)
 
@@ -131,19 +12,27 @@ local function CreateESP(player)
 
     local function Setup(char)
 
-        local hrp = char:WaitForChild("HumanoidRootPart",5)
-        local hum = char:FindFirstChildOfClass("Humanoid")
+        local hum = char:WaitForChild("Humanoid")
+        local hrp = char:WaitForChild("HumanoidRootPart")
 
-        if not hrp or not hum then return end
+------------------------------------------------
 
-        local highlight = Instance.new("Highlight")
-        highlight.Parent = char
-        highlight.FillTransparency = 1
-        highlight.OutlineColor = Color3.fromRGB(255,0,0)
+-- BOX ESP
+
+        local box = Instance.new("BoxHandleAdornment")
+        box.Adornee = hrp
+        box.Parent = hrp
+        box.Size = Vector3.new(4,6,2)
+        box.Transparency = 0.4
+        box.AlwaysOnTop = true
+
+------------------------------------------------
+
+-- TEXT ESP
 
         local gui = Instance.new("BillboardGui")
         gui.Parent = hrp
-        gui.Size = UDim2.new(0,200,0,50)
+        gui.Size = UDim2.new(0,140,0,30)
         gui.StudsOffset = Vector3.new(0,3,0)
         gui.AlwaysOnTop = true
 
@@ -151,14 +40,117 @@ local function CreateESP(player)
         text.Parent = gui
         text.Size = UDim2.new(1,0,1,0)
         text.BackgroundTransparency = 1
-        text.TextColor3 = Color3.fromRGB(255,0,0)
-        text.TextStrokeTransparency = 0
         text.TextScaled = true
+        text.TextStrokeTransparency = 0
+        text.Font = Enum.Font.SourceSansBold
 
-        RunService.Heartbeat:Connect(function()
-            if hum then
-                text.Text = player.Name.." | "..math.floor(hum.Health)
+------------------------------------------------
+
+-- SKELETON LINES
+
+        local lines = {}
+
+        for i=1,12 do
+            local line = Drawing.new("Line")
+            line.Thickness = 2
+            line.Transparency = 1
+            lines[i] = line
+        end
+
+------------------------------------------------
+
+        RunService.RenderStepped:Connect(function()
+
+            if not char.Parent then return end
+
+            local myChar = LocalPlayer.Character
+            if not myChar then return end
+
+            local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+            if not myHRP then return end
+
+------------------------------------------------
+
+-- RAINBOW COLOR
+
+            local t = tick()
+
+            local color = Color3.new(
+                math.sin(t)*0.5+0.5,
+                math.sin(t+2)*0.5+0.5,
+                math.sin(t+4)*0.5+0.5
+            )
+
+            box.Color3 = color
+
+------------------------------------------------
+
+-- DISTANCE + TEXT
+
+            local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
+
+            text.Text = player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
+
+------------------------------------------------
+
+-- SKELETON PARTS
+
+            local parts = {
+                char:FindFirstChild("Head"),
+                char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso"),
+                char:FindFirstChild("LowerTorso"),
+                char:FindFirstChild("LeftUpperArm"),
+                char:FindFirstChild("LeftLowerArm"),
+                char:FindFirstChild("RightUpperArm"),
+                char:FindFirstChild("RightLowerArm"),
+                char:FindFirstChild("LeftUpperLeg"),
+                char:FindFirstChild("LeftLowerLeg"),
+                char:FindFirstChild("RightUpperLeg"),
+                char:FindFirstChild("RightLowerLeg")
+            }
+
+------------------------------------------------
+
+            local function draw(p1,p2,index)
+
+                if not p1 or not p2 then
+                    lines[index].Visible = false
+                    return
+                end
+
+                local v1,on1 = Camera:WorldToViewportPoint(p1.Position)
+                local v2,on2 = Camera:WorldToViewportPoint(p2.Position)
+
+                if on1 and on2 then
+
+                    lines[index].From = Vector2.new(v1.X,v1.Y)
+                    lines[index].To = Vector2.new(v2.X,v2.Y)
+
+                    lines[index].Color = color
+                    lines[index].Visible = true
+
+                else
+                    lines[index].Visible = false
+                end
+
             end
+
+------------------------------------------------
+
+            draw(parts[1],parts[2],1)
+
+            draw(parts[2],parts[4],2)
+            draw(parts[4],parts[5],3)
+
+            draw(parts[2],parts[6],4)
+            draw(parts[6],parts[7],5)
+
+            draw(parts[3],parts[8],6)
+            draw(parts[8],parts[9],7)
+
+            draw(parts[3],parts[10],8)
+            draw(parts[10],parts[11],9)
+
         end)
 
     end
@@ -171,121 +163,10 @@ local function CreateESP(player)
 
 end
 
+------------------------------------------------
+
 for _,p in ipairs(Players:GetPlayers()) do
     CreateESP(p)
 end
 
 Players.PlayerAdded:Connect(CreateESP)
-
-------------------------------------------------
-
--- DOMAIN DETECT
-
-local DomainActive = false
-
-local function CheckDomain()
-
-    if Character and Character:FindFirstChild("Domain") then
-        DomainActive = true
-    else
-        DomainActive = false
-    end
-
-end
-
-------------------------------------------------
-
-RunService.Heartbeat:Connect(function()
-
-    if not HRP then return end
-
-    CheckDomain()
-
-------------------------------------------------
-
--- Anti Stuck
-
-    if LastPos then
-
-        local dist = (HRP.Position - LastPos).Magnitude
-
-        if dist < 1 then
-            StuckTime += 1
-        else
-            StuckTime = 0
-        end
-
-        if StuckTime > 180 then
-
-            if Target and Target.Character then
-                local enemyHRP = Target.Character:FindFirstChild("HumanoidRootPart")
-                if enemyHRP then
-                    HRP.CFrame = enemyHRP.CFrame * CFrame.new(0,0,5)
-                end
-            end
-
-            StuckTime = 0
-
-        end
-
-    end
-
-    LastPos = HRP.Position
-
-------------------------------------------------
-
--- Target chết
-
-    if Target
-    and Target.Character
-    and Target.Character:FindFirstChild("Humanoid")
-    and Target.Character.Humanoid.Health <= 0 then
-        Target = nil
-    end
-
-------------------------------------------------
-
-    if not Target then
-        Target = GetTarget()
-    end
-
-    if not Target then return end
-
-    local enemyChar = Target.Character
-    if not enemyChar then Target = nil return end
-
-    local enemyHRP = enemyChar:FindFirstChild("HumanoidRootPart")
-    if not enemyHRP then Target = nil return end
-
-------------------------------------------------
-
--- Fly sau lưng
-
-    local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
-
-    local direction = (behind.Position - HRP.Position).Unit
-    HRP.Velocity = direction * FlySpeed
-
-    HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
-
-------------------------------------------------
-
-    local dist = (HRP.Position - enemyHRP.Position).Magnitude
-
-    if dist <= 6 then
-
-        -- Auto Domain
-        if not DomainActive then
-            press(Enum.KeyCode.R)
-        end
-
-        M1()
-
-        press(Enum.KeyCode.One)
-        press(Enum.KeyCode.Two)
-        press(Enum.KeyCode.Three)
-        press(Enum.KeyCode.Four)
-
-    end
-
-end)
