@@ -1,4 +1,4 @@
--- Jujutsu Shenanigans Auto PvP Farm (Fly Speed 80)
+-- Jujutsu Shenanigans Auto PvP (Smooth M1)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,35 +15,38 @@ local FlySpeed = 80
 local LastPos
 local StuckTime = 0
 
--------------------------------------------------
+local attacking = false
+
+------------------------------------------------
 
 local function press(key)
 
-    pcall(function()
-
-        VIM:SendKeyEvent(true,key,false,game)
-        task.wait(0.05)
-        VIM:SendKeyEvent(false,key,false,game)
-
-    end)
+    VIM:SendKeyEvent(true,key,false,game)
+    task.wait(0.05)
+    VIM:SendKeyEvent(false,key,false,game)
 
 end
 
--------------------------------------------------
+------------------------------------------------
+
+-- M1 KHÔNG LAG
 
 local function M1()
 
-    pcall(function()
+    if attacking then return end
+    attacking = true
 
-        VIM:SendMouseButtonEvent(0,0,0,true,game,0)
-        task.wait(0.04)
-        VIM:SendMouseButtonEvent(0,0,0,false,game,0)
+    VIM:SendMouseButtonEvent(0,0,0,true,game,0)
+    task.wait(0.05)
+    VIM:SendMouseButtonEvent(0,0,0,false,game,0)
 
-    end)
+    task.wait(0.12)
+
+    attacking = false
 
 end
 
--------------------------------------------------
+------------------------------------------------
 
 -- SMART FIND PLAYER
 
@@ -81,35 +84,31 @@ local function GetTarget()
 
 end
 
--------------------------------------------------
+------------------------------------------------
 
 local function SetupCharacter(char)
 
     Character = char
     HRP = char:WaitForChild("HumanoidRootPart")
 
-    -- noclip xuyên tường
+    -- noclip
 
     RunService.Stepped:Connect(function()
 
         if Character then
-
-            for _,part in ipairs(Character:GetDescendants()) do
-
-                if part:IsA("BasePart") then
-                    part.CanCollide = false
-                    part.Massless = true
+            for _,v in ipairs(Character:GetDescendants()) do
+                if v:IsA("BasePart") then
+                    v.CanCollide = false
+                    v.Massless = true
                 end
-
             end
-
         end
 
     end)
 
 end
 
--------------------------------------------------
+------------------------------------------------
 
 LocalPlayer.CharacterAdded:Connect(function(char)
 
@@ -125,15 +124,15 @@ if LocalPlayer.Character then
     SetupCharacter(LocalPlayer.Character)
 end
 
--------------------------------------------------
+------------------------------------------------
 
 RunService.Heartbeat:Connect(function()
 
     if not HRP then return end
 
-    -------------------------------------------------
+    ------------------------------------------------
 
-    -- Anti Stuck
+    -- Anti stuck
 
     if LastPos then
 
@@ -165,9 +164,9 @@ RunService.Heartbeat:Connect(function()
 
     LastPos = HRP.Position
 
-    -------------------------------------------------
+    ------------------------------------------------
 
-    -- Target chết
+    -- target chết
 
     if Target
     and Target.Character
@@ -178,7 +177,7 @@ RunService.Heartbeat:Connect(function()
 
     end
 
-    -------------------------------------------------
+    ------------------------------------------------
 
     -- tìm player
 
@@ -202,7 +201,7 @@ RunService.Heartbeat:Connect(function()
         return
     end
 
-    -------------------------------------------------
+    ------------------------------------------------
 
     -- bay ra sau lưng
 
@@ -213,7 +212,7 @@ RunService.Heartbeat:Connect(function()
 
     HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
 
-    -------------------------------------------------
+    ------------------------------------------------
 
     local dist = (HRP.Position - enemyHRP.Position).Magnitude
 
@@ -222,15 +221,11 @@ RunService.Heartbeat:Connect(function()
         press(Enum.KeyCode.Q)
 
         M1()
-        M1()
-        M1()
 
         press(Enum.KeyCode.One)
         press(Enum.KeyCode.Two)
         press(Enum.KeyCode.Three)
         press(Enum.KeyCode.Four)
-
-        press(Enum.KeyCode.F)
 
     end
 
