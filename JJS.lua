@@ -1,4 +1,4 @@
--- Jujutsu Shenanigans Auto PvP Farm (FULL)
+-- Jujutsu Shenanigans Auto PvP Farm FULL
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,7 +15,7 @@ local Smooth = 0.25
 local LastPos
 local StuckTime = 0
 
---------------------------------------------------
+------------------------------------------------
 
 local function press(key)
 
@@ -29,7 +29,7 @@ local function press(key)
 
 end
 
---------------------------------------------------
+------------------------------------------------
 
 local function M1()
 
@@ -43,7 +43,7 @@ local function M1()
 
 end
 
---------------------------------------------------
+------------------------------------------------
 
 -- SMART FIND PLAYER
 
@@ -81,30 +81,35 @@ local function GetTarget()
 
 end
 
---------------------------------------------------
+------------------------------------------------
 
 local function SetupCharacter(char)
 
     Character = char
     HRP = char:WaitForChild("HumanoidRootPart")
 
-    -- noclip
+    -- Noclip xuyên tường
 
     RunService.Stepped:Connect(function()
 
         if Character then
-            for _,v in pairs(Character:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
+
+            for _,part in ipairs(Character:GetDescendants()) do
+
+                if part:IsA("BasePart") then
+                    part.CanCollide = false
+                    part.Massless = true
                 end
+
             end
+
         end
 
     end)
 
 end
 
---------------------------------------------------
+------------------------------------------------
 
 LocalPlayer.CharacterAdded:Connect(function(char)
 
@@ -120,13 +125,13 @@ if LocalPlayer.Character then
     SetupCharacter(LocalPlayer.Character)
 end
 
---------------------------------------------------
+------------------------------------------------
 
 RunService.Heartbeat:Connect(function()
 
     if not HRP then return end
 
-    -- Anti Stuck
+    -- Anti stuck
 
     if LastPos then
 
@@ -158,9 +163,9 @@ RunService.Heartbeat:Connect(function()
 
     LastPos = HRP.Position
 
-    --------------------------------------------------
+    ------------------------------------------------
 
-    -- Target chết
+    -- target chết
 
     if Target
     and Target.Character
@@ -171,7 +176,7 @@ RunService.Heartbeat:Connect(function()
 
     end
 
-    --------------------------------------------------
+    ------------------------------------------------
 
     -- tìm player
 
@@ -197,7 +202,7 @@ RunService.Heartbeat:Connect(function()
 
     local dist = (HRP.Position - enemyHRP.Position).Magnitude
 
-    --------------------------------------------------
+    ------------------------------------------------
 
     -- bay ra sau lưng
 
@@ -207,7 +212,7 @@ RunService.Heartbeat:Connect(function()
 
     HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
 
-    --------------------------------------------------
+    ------------------------------------------------
 
     -- combo
 
