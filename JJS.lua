@@ -1,4 +1,4 @@
--- Jujutsu Shenanigans Auto PvP (Smooth M1)
+-- Jujutsu Shenanigans Auto PvP FULL
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -14,7 +14,6 @@ local FlySpeed = 80
 
 local LastPos
 local StuckTime = 0
-
 local attacking = false
 
 ------------------------------------------------
@@ -29,7 +28,7 @@ end
 
 ------------------------------------------------
 
--- M1 KHÔNG LAG
+-- Smooth M1
 
 local function M1()
 
@@ -48,7 +47,7 @@ end
 
 ------------------------------------------------
 
--- SMART FIND PLAYER
+-- Smart Find Player
 
 local function GetTarget()
 
@@ -86,21 +85,19 @@ end
 
 ------------------------------------------------
 
+-- Character Setup
+
 local function SetupCharacter(char)
 
     Character = char
     HRP = char:WaitForChild("HumanoidRootPart")
 
-    -- noclip
-
     RunService.Stepped:Connect(function()
 
-        if Character then
-            for _,v in ipairs(Character:GetDescendants()) do
-                if v:IsA("BasePart") then
-                    v.CanCollide = false
-                    v.Massless = true
-                end
+        for _,v in ipairs(Character:GetDescendants()) do
+            if v:IsA("BasePart") then
+                v.CanCollide = false
+                v.Massless = true
             end
         end
 
@@ -126,13 +123,87 @@ end
 
 ------------------------------------------------
 
+-- ESP SYSTEM
+
+local function CreateESP(player)
+
+    if player == LocalPlayer then return end
+
+    local function Setup(char)
+
+        local hrp = char:WaitForChild("HumanoidRootPart",5)
+        local hum = char:FindFirstChildOfClass("Humanoid")
+
+        if not hrp or not hum then return end
+
+        local highlight = Instance.new("Highlight")
+        highlight.Parent = char
+        highlight.FillTransparency = 1
+        highlight.OutlineColor = Color3.fromRGB(255,0,0)
+
+        local gui = Instance.new("BillboardGui")
+        gui.Parent = hrp
+        gui.Size = UDim2.new(0,200,0,50)
+        gui.StudsOffset = Vector3.new(0,3,0)
+        gui.AlwaysOnTop = true
+
+        local text = Instance.new("TextLabel")
+        text.Parent = gui
+        text.Size = UDim2.new(1,0,1,0)
+        text.BackgroundTransparency = 1
+        text.TextColor3 = Color3.fromRGB(255,0,0)
+        text.TextStrokeTransparency = 0
+        text.TextScaled = true
+
+        RunService.Heartbeat:Connect(function()
+            if hum then
+                text.Text = player.Name.." | "..math.floor(hum.Health)
+            end
+        end)
+
+    end
+
+    if player.Character then
+        Setup(player.Character)
+    end
+
+    player.CharacterAdded:Connect(Setup)
+
+end
+
+for _,p in ipairs(Players:GetPlayers()) do
+    CreateESP(p)
+end
+
+Players.PlayerAdded:Connect(CreateESP)
+
+------------------------------------------------
+
+-- DOMAIN DETECT
+
+local DomainActive = false
+
+local function CheckDomain()
+
+    if Character and Character:FindFirstChild("Domain") then
+        DomainActive = true
+    else
+        DomainActive = false
+    end
+
+end
+
+------------------------------------------------
+
 RunService.Heartbeat:Connect(function()
 
     if not HRP then return end
 
-    ------------------------------------------------
+    CheckDomain()
 
-    -- Anti stuck
+------------------------------------------------
+
+-- Anti Stuck
 
     if LastPos then
 
@@ -147,13 +218,10 @@ RunService.Heartbeat:Connect(function()
         if StuckTime > 180 then
 
             if Target and Target.Character then
-
                 local enemyHRP = Target.Character:FindFirstChild("HumanoidRootPart")
-
                 if enemyHRP then
                     HRP.CFrame = enemyHRP.CFrame * CFrame.new(0,0,5)
                 end
-
             end
 
             StuckTime = 0
@@ -164,22 +232,18 @@ RunService.Heartbeat:Connect(function()
 
     LastPos = HRP.Position
 
-    ------------------------------------------------
+------------------------------------------------
 
-    -- target chết
+-- Target chết
 
     if Target
     and Target.Character
     and Target.Character:FindFirstChild("Humanoid")
     and Target.Character.Humanoid.Health <= 0 then
-
         Target = nil
-
     end
 
-    ------------------------------------------------
-
-    -- tìm player
+------------------------------------------------
 
     if not Target then
         Target = GetTarget()
@@ -188,22 +252,14 @@ RunService.Heartbeat:Connect(function()
     if not Target then return end
 
     local enemyChar = Target.Character
-
-    if not enemyChar then
-        Target = nil
-        return
-    end
+    if not enemyChar then Target = nil return end
 
     local enemyHRP = enemyChar:FindFirstChild("HumanoidRootPart")
+    if not enemyHRP then Target = nil return end
 
-    if not enemyHRP then
-        Target = nil
-        return
-    end
+------------------------------------------------
 
-    ------------------------------------------------
-
-    -- bay ra sau lưng
+-- Fly sau lưng
 
     local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
 
@@ -212,13 +268,16 @@ RunService.Heartbeat:Connect(function()
 
     HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
 
-    ------------------------------------------------
+------------------------------------------------
 
     local dist = (HRP.Position - enemyHRP.Position).Magnitude
 
-    if dist <= 5 then
+    if dist <= 6 then
 
-        press(Enum.KeyCode.Q)
+        -- Auto Domain
+        if not DomainActive then
+            press(Enum.KeyCode.R)
+        end
 
         M1()
 
