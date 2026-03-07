@@ -1,4 +1,4 @@
--- Jujutsu Shenanigans Auto PvP (FULL FIX)
+-- Jujutsu Shenanigans Auto PvP Farm (FULL)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -10,15 +10,12 @@ local Character
 local HRP
 local Target
 
-local Height = 100
-local Smooth = 0.15
-
-local State = "RAISE"
+local Smooth = 0.25
 
 local LastPos
 local StuckTime = 0
 
-----------------------------------------------------
+--------------------------------------------------
 
 local function press(key)
 
@@ -32,7 +29,7 @@ local function press(key)
 
 end
 
-----------------------------------------------------
+--------------------------------------------------
 
 local function M1()
 
@@ -46,20 +43,22 @@ local function M1()
 
 end
 
-----------------------------------------------------
+--------------------------------------------------
 
-local function GetNearest()
+-- SMART FIND PLAYER
+
+local function GetTarget()
 
     if not HRP then return nil end
 
     local nearest
     local shortest = math.huge
 
-    for _,v in pairs(Players:GetPlayers()) do
+    for _,player in ipairs(Players:GetPlayers()) do
 
-        if v ~= LocalPlayer then
+        if player ~= LocalPlayer then
 
-            local char = v.Character
+            local char = player.Character
             local hum = char and char:FindFirstChildOfClass("Humanoid")
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
@@ -69,7 +68,7 @@ local function GetNearest()
 
                 if dist < shortest then
                     shortest = dist
-                    nearest = v
+                    nearest = player
                 end
 
             end
@@ -79,19 +78,17 @@ local function GetNearest()
     end
 
     return nearest
+
 end
 
-----------------------------------------------------
+--------------------------------------------------
 
 local function SetupCharacter(char)
 
     Character = char
-    HRP = char:WaitForChild("HumanoidRootPart",5)
+    HRP = char:WaitForChild("HumanoidRootPart")
 
-    if not HRP then
-        warn("HRP not found")
-        return
-    end
+    -- noclip
 
     RunService.Stepped:Connect(function()
 
@@ -107,7 +104,7 @@ local function SetupCharacter(char)
 
 end
 
-----------------------------------------------------
+--------------------------------------------------
 
 LocalPlayer.CharacterAdded:Connect(function(char)
 
@@ -116,7 +113,6 @@ LocalPlayer.CharacterAdded:Connect(function(char)
     SetupCharacter(char)
 
     Target = nil
-    State = "RAISE"
 
 end)
 
@@ -124,7 +120,7 @@ if LocalPlayer.Character then
     SetupCharacter(LocalPlayer.Character)
 end
 
-----------------------------------------------------
+--------------------------------------------------
 
 RunService.Heartbeat:Connect(function()
 
@@ -162,9 +158,9 @@ RunService.Heartbeat:Connect(function()
 
     LastPos = HRP.Position
 
-    ------------------------------------------------
+    --------------------------------------------------
 
-    -- target chết
+    -- Target chết
 
     if Target
     and Target.Character
@@ -172,27 +168,18 @@ RunService.Heartbeat:Connect(function()
     and Target.Character.Humanoid.Health <= 0 then
 
         Target = nil
-        State = "RAISE"
 
     end
 
-    ------------------------------------------------
+    --------------------------------------------------
 
-    -- tìm target
+    -- tìm player
 
     if not Target then
-
-        Target = GetNearest()
-
-        if not Target then
-            return
-        end
-
-        State = "RAISE"
-
+        Target = GetTarget()
     end
 
-    ------------------------------------------------
+    if not Target then return end
 
     local enemyChar = Target.Character
 
@@ -210,60 +197,34 @@ RunService.Heartbeat:Connect(function()
 
     local dist = (HRP.Position - enemyHRP.Position).Magnitude
 
-    ------------------------------------------------
+    --------------------------------------------------
 
-    if State == "RAISE" then
+    -- bay ra sau lưng
 
-        local raisePos = Vector3.new(
-            HRP.Position.X,
-            enemyHRP.Position.Y + Height,
-            HRP.Position.Z
-        )
+    local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
 
-        HRP.CFrame = HRP.CFrame:Lerp(CFrame.new(raisePos),Smooth)
+    HRP.CFrame = HRP.CFrame:Lerp(behind,Smooth)
 
-        if math.abs(HRP.Position.Y - (enemyHRP.Position.Y + Height)) < 5 then
-            State = "MOVE"
-        end
+    HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
 
-    elseif State == "MOVE" then
+    --------------------------------------------------
 
-        local movePos = Vector3.new(
-            enemyHRP.Position.X,
-            enemyHRP.Position.Y + Height,
-            enemyHRP.Position.Z
-        )
+    -- combo
 
-        HRP.CFrame = HRP.CFrame:Lerp(CFrame.new(movePos),Smooth)
+    if dist <= 5 then
 
-        if dist < 25 then
-            State = "DROP"
-        end
+        press(Enum.KeyCode.Q)
 
-    elseif State == "DROP" then
+        M1()
+        M1()
+        M1()
 
-        local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
+        press(Enum.KeyCode.One)
+        press(Enum.KeyCode.Two)
+        press(Enum.KeyCode.Three)
+        press(Enum.KeyCode.Four)
 
-        HRP.CFrame = HRP.CFrame:Lerp(behind,0.3)
-
-        HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
-
-        if dist <= 5 then
-
-            press(Enum.KeyCode.Q)
-
-            M1()
-            M1()
-            M1()
-
-            press(Enum.KeyCode.One)
-            press(Enum.KeyCode.Two)
-            press(Enum.KeyCode.Three)
-            press(Enum.KeyCode.Four)
-
-            press(Enum.KeyCode.F)
-
-        end
+        press(Enum.KeyCode.F)
 
     end
 
