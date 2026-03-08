@@ -1,14 +1,18 @@
--- Jujutsu Shenanigans Backstab PvP FIX
+-- Jujutsu Shenanigans Full PvP Fly Script
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 
 local LP = Players.LocalPlayer
-local Char, HRP
+local Char, HRP, Hum
 local Target
 
+local FlySpeed = 200
+local Delay = 0.1
+
 local attacking = false
+local LastHealth = 0
 
 ------------------------------------------------
 -- PRESS KEY
@@ -22,7 +26,7 @@ VIM:SendKeyEvent(false,key,false,game)
 end
 
 ------------------------------------------------
--- M1
+-- M1 SYSTEM
 
 local function StartM1()
 
@@ -85,12 +89,18 @@ return nearest
 end
 
 ------------------------------------------------
--- CHARACTER SETUP
+-- SETUP CHARACTER
 
 local function SetupCharacter(c)
 
 Char = c
 HRP = c:WaitForChild("HumanoidRootPart")
+Hum = c:WaitForChild("Humanoid")
+
+LastHealth = Hum.Health
+
+------------------------------------------------
+-- Noclip
 
 RunService.Stepped:Connect(function()
 
@@ -102,32 +112,34 @@ end
 
 end)
 
+------------------------------------------------
+-- Dodge khi bị đánh
+
+Hum.HealthChanged:Connect(function(h)
+
+if h < LastHealth then
+
+HRP.CFrame = HRP.CFrame * CFrame.new(math.random(-8,8),0,0)
+
+press(Enum.KeyCode.Q)
+
 end
 
-LP.CharacterAdded:Connect(function(c)
-
-task.wait(1)
-SetupCharacter(c)
-Target=nil
+LastHealth = h
 
 end)
 
-if LP.Character then
-SetupCharacter(LP.Character)
-end
-
 ------------------------------------------------
--- GET BEHIND POSITION
+-- Fly system
 
-local function GetBehind(enemyHRP)
+local attachment = Instance.new("Attachment")
+attachment.Parent = HRP
 
-local behind =
-enemyHRP.Position -
-enemyHRP.CFrame.LookVector * 4
-
-return behind
-
-end
+local velocity = Instance.new("LinearVelocity")
+velocity.Attachment0 = attachment
+velocity.MaxForce = math.huge
+velocity.VectorVelocity = Vector3.zero
+velocity.Parent = HRP
 
 ------------------------------------------------
 -- MAIN LOOP
@@ -159,15 +171,17 @@ return
 end
 
 ------------------------------------------------
--- MOVE BEHIND
+-- LOCK SAU LƯNG
 
-local behind = GetBehind(enemyHRP)
+local behind =
+enemyHRP.Position -
+enemyHRP.CFrame.LookVector * 3
 
 local direction =
 (behind - HRP.Position).Unit
 
-HRP.AssemblyLinearVelocity =
-direction * 200
+velocity.VectorVelocity =
+direction * FlySpeed
 
 HRP.CFrame =
 CFrame.lookAt(HRP.Position, enemyHRP.Position)
@@ -196,3 +210,76 @@ StopM1()
 end
 
 end)
+
+end
+
+------------------------------------------------
+
+LP.CharacterAdded:Connect(function(c)
+
+task.wait(1)
+SetupCharacter(c)
+Target=nil
+
+end)
+
+if LP.Character then
+SetupCharacter(LP.Character)
+end
+
+------------------------------------------------
+-- ESP
+
+local function CreateESP(player)
+
+if player == LP then return end
+
+local function Setup(char)
+
+local hum = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local gui = Instance.new("BillboardGui")
+gui.Parent = hrp
+gui.Size = UDim2.new(0,120,0,25)
+gui.StudsOffset = Vector3.new(0,3,0)
+gui.AlwaysOnTop = true
+
+local text = Instance.new("TextLabel")
+text.Parent = gui
+text.Size = UDim2.new(1,0,1,0)
+text.BackgroundTransparency = 1
+text.TextScaled = true
+text.TextStrokeTransparency = 0
+
+RunService.RenderStepped:Connect(function()
+
+local myChar = LP.Character
+if not myChar then return end
+
+local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+if not myHRP then return end
+
+local dist =
+math.floor((myHRP.Position - hrp.Position).Magnitude)
+
+text.Text =
+player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
+
+end)
+
+end
+
+if player.Character then
+Setup(player.Character)
+end
+
+player.CharacterAdded:Connect(Setup)
+
+end
+
+for _,p in pairs(Players:GetPlayers()) do
+CreateESP(p)
+end
+
+Players.PlayerAdded:Connect(CreateESP)
