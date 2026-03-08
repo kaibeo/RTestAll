@@ -1,31 +1,28 @@
--- Jujutsu Shenanigans FULL AUTO PVP + ESP
+-- Jujutsu Shenanigans FINAL ALL SCRIPT
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 
 local LP = Players.LocalPlayer
-local Char
-local HRP
+local Char, HRP, Hum
 local Target
 
-local LastDamage = tick()
 local attacking = false
-local Smooth = 0.25
+local LastDamage = tick()
+local LastHealth = 0
 
--------------------------------------------------
--- KEY PRESS
+------------------------------------------------
+-- PRESS KEY
 
 local function press(key)
-
 VIM:SendKeyEvent(true,key,false,game)
 task.wait(0.05)
 VIM:SendKeyEvent(false,key,false,game)
-
 end
 
--------------------------------------------------
--- M1 SMOOTH
+------------------------------------------------
+-- M1
 
 local function M1()
 
@@ -42,12 +39,12 @@ attacking = false
 
 end
 
--------------------------------------------------
--- FIND PLAYER
+------------------------------------------------
+-- FIND TARGET
 
 local function GetTarget()
 
-if not HRP then return nil end
+if not HRP then return end
 
 local nearest
 local shortest = math.huge
@@ -79,26 +76,16 @@ return nearest
 
 end
 
--------------------------------------------------
--- DOMAIN DETECT
-
-local function InDomain()
-
-if workspace:FindFirstChild("Domain") then
-return true
-end
-
-return false
-
-end
-
--------------------------------------------------
--- CHARACTER SETUP
+------------------------------------------------
+-- SETUP CHARACTER
 
 local function SetupCharacter(c)
 
 Char = c
 HRP = c:WaitForChild("HumanoidRootPart")
+Hum = c:WaitForChild("Humanoid")
+
+LastHealth = Hum.Health
 
 RunService.Stepped:Connect(function()
 
@@ -110,70 +97,98 @@ end
 
 end)
 
+Hum.HealthChanged:Connect(function(h)
+
+if h < LastHealth then
+
+local dir = math.random(1,2)==1 and -8 or 8
+HRP.CFrame = HRP.CFrame * CFrame.new(dir,0,0)
+
+press(Enum.KeyCode.Q)
+
+end
+
+LastHealth = h
+
+end)
+
 end
 
 LP.CharacterAdded:Connect(function(c)
-
 task.wait(1)
 SetupCharacter(c)
-Target = nil
-
+Target=nil
 end)
 
 if LP.Character then
 SetupCharacter(LP.Character)
 end
 
--------------------------------------------------
--- AUTO FARM LOOP
+------------------------------------------------
+-- AIMLOCK
+
+local function Aimlock(enemyHRP)
+HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
+end
+
+------------------------------------------------
+-- AIR COMBO
+
+local function AirCombo(enemyHRP)
+enemyHRP.Velocity = Vector3.new(0,40,0)
+end
+
+------------------------------------------------
+-- AUTO FARM
 
 RunService.Heartbeat:Connect(function()
 
 if not HRP then return end
 
 if tick() - LastDamage > 120 then
-Target = nil
+Target=nil
 end
 
-if InDomain() then
-Target = GetTarget()
-else
 if not Target then
 Target = GetTarget()
-end
 end
 
 if not Target then return end
 
-local char = Target.Character
-if not char then Target=nil return end
+local enemy = Target.Character
+if not enemy then Target=nil return end
 
-local enemyHRP = char:FindFirstChild("HumanoidRootPart")
-local hum = char:FindFirstChildOfClass("Humanoid")
+local enemyHRP = enemy:FindFirstChild("HumanoidRootPart")
+local enemyHum = enemy:FindFirstChildOfClass("Humanoid")
 
-if not enemyHRP or not hum then Target=nil return end
-
-if hum.Health <= 0 then
+if not enemyHRP or not enemyHum then
 Target=nil
 return
 end
 
--------------------------------------------------
--- MOVE BEHIND PLAYER
+if enemyHum.Health <= 0 then
+Target=nil
+return
+end
+
+------------------------------------------------
+-- MOVE
 
 local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
 
-HRP.CFrame = HRP.CFrame:Lerp(behind,Smooth)
-HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
+local dir = (behind.Position - HRP.Position).Unit
+HRP.AssemblyLinearVelocity = dir * 45
 
--------------------------------------------------
+Aimlock(enemyHRP)
+
+------------------------------------------------
 -- COMBAT
 
 local dist = (HRP.Position - enemyHRP.Position).Magnitude
 
 if dist <= 6 then
 
-press(Enum.KeyCode.R) -- domain
+press(Enum.KeyCode.R)
 
 M1()
 
@@ -182,27 +197,25 @@ press(Enum.KeyCode.Two)
 press(Enum.KeyCode.Three)
 press(Enum.KeyCode.Four)
 
+AirCombo(enemyHRP)
+
 LastDamage = tick()
 
 end
 
 end)
 
--------------------------------------------------
+------------------------------------------------
 -- ESP SYSTEM
-
-local Camera = workspace.CurrentCamera
 
 local function CreateESP(player)
 
-if player == LP then return end
+if player==LP then return end
 
 local function Setup(char)
 
 local hum = char:WaitForChild("Humanoid")
 local hrp = char:WaitForChild("HumanoidRootPart")
-
--- BOX
 
 local box = Instance.new("BoxHandleAdornment")
 box.Adornee = hrp
@@ -211,11 +224,9 @@ box.Size = Vector3.new(4,6,2)
 box.AlwaysOnTop = true
 box.Transparency = 0.4
 
--- TEXT
-
 local gui = Instance.new("BillboardGui")
 gui.Parent = hrp
-gui.Size = UDim2.new(0,140,0,30)
+gui.Size = UDim2.new(0,120,0,25)
 gui.StudsOffset = Vector3.new(0,3,0)
 gui.AlwaysOnTop = true
 
@@ -227,8 +238,6 @@ text.TextScaled = true
 text.TextStrokeTransparency = 0
 
 RunService.RenderStepped:Connect(function()
-
-if not char.Parent then return end
 
 local myChar = LP.Character
 if not myChar then return end
