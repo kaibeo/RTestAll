@@ -1,172 +1,269 @@
+-- Jujutsu Shenanigans FULL AUTO PVP + ESP
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local VIM = game:GetService("VirtualInputManager")
 
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
+local LP = Players.LocalPlayer
+local Char
+local HRP
+local Target
 
-------------------------------------------------
+local LastDamage = tick()
+local attacking = false
+local Smooth = 0.25
 
-local function CreateESP(player)
+-------------------------------------------------
+-- KEY PRESS
 
-    if player == LocalPlayer then return end
+local function press(key)
 
-    local function Setup(char)
-
-        local hum = char:WaitForChild("Humanoid")
-        local hrp = char:WaitForChild("HumanoidRootPart")
-
-------------------------------------------------
-
--- BOX ESP
-
-        local box = Instance.new("BoxHandleAdornment")
-        box.Adornee = hrp
-        box.Parent = hrp
-        box.Size = Vector3.new(4,6,2)
-        box.Transparency = 0.4
-        box.AlwaysOnTop = true
-
-------------------------------------------------
-
--- TEXT ESP
-
-        local gui = Instance.new("BillboardGui")
-        gui.Parent = hrp
-        gui.Size = UDim2.new(0,140,0,30)
-        gui.StudsOffset = Vector3.new(0,3,0)
-        gui.AlwaysOnTop = true
-
-        local text = Instance.new("TextLabel")
-        text.Parent = gui
-        text.Size = UDim2.new(1,0,1,0)
-        text.BackgroundTransparency = 1
-        text.TextScaled = true
-        text.TextStrokeTransparency = 0
-        text.Font = Enum.Font.SourceSansBold
-
-------------------------------------------------
-
--- SKELETON LINES
-
-        local lines = {}
-
-        for i=1,12 do
-            local line = Drawing.new("Line")
-            line.Thickness = 2
-            line.Transparency = 1
-            lines[i] = line
-        end
-
-------------------------------------------------
-
-        RunService.RenderStepped:Connect(function()
-
-            if not char.Parent then return end
-
-            local myChar = LocalPlayer.Character
-            if not myChar then return end
-
-            local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-            if not myHRP then return end
-
-------------------------------------------------
-
--- RAINBOW COLOR
-
-            local t = tick()
-
-            local color = Color3.new(
-                math.sin(t)*0.5+0.5,
-                math.sin(t+2)*0.5+0.5,
-                math.sin(t+4)*0.5+0.5
-            )
-
-            box.Color3 = color
-
-------------------------------------------------
-
--- DISTANCE + TEXT
-
-            local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
-
-            text.Text = player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
-
-------------------------------------------------
-
--- SKELETON PARTS
-
-            local parts = {
-                char:FindFirstChild("Head"),
-                char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso"),
-                char:FindFirstChild("LowerTorso"),
-                char:FindFirstChild("LeftUpperArm"),
-                char:FindFirstChild("LeftLowerArm"),
-                char:FindFirstChild("RightUpperArm"),
-                char:FindFirstChild("RightLowerArm"),
-                char:FindFirstChild("LeftUpperLeg"),
-                char:FindFirstChild("LeftLowerLeg"),
-                char:FindFirstChild("RightUpperLeg"),
-                char:FindFirstChild("RightLowerLeg")
-            }
-
-------------------------------------------------
-
-            local function draw(p1,p2,index)
-
-                if not p1 or not p2 then
-                    lines[index].Visible = false
-                    return
-                end
-
-                local v1,on1 = Camera:WorldToViewportPoint(p1.Position)
-                local v2,on2 = Camera:WorldToViewportPoint(p2.Position)
-
-                if on1 and on2 then
-
-                    lines[index].From = Vector2.new(v1.X,v1.Y)
-                    lines[index].To = Vector2.new(v2.X,v2.Y)
-
-                    lines[index].Color = color
-                    lines[index].Visible = true
-
-                else
-                    lines[index].Visible = false
-                end
-
-            end
-
-------------------------------------------------
-
-            draw(parts[1],parts[2],1)
-
-            draw(parts[2],parts[4],2)
-            draw(parts[4],parts[5],3)
-
-            draw(parts[2],parts[6],4)
-            draw(parts[6],parts[7],5)
-
-            draw(parts[3],parts[8],6)
-            draw(parts[8],parts[9],7)
-
-            draw(parts[3],parts[10],8)
-            draw(parts[10],parts[11],9)
-
-        end)
-
-    end
-
-    if player.Character then
-        Setup(player.Character)
-    end
-
-    player.CharacterAdded:Connect(Setup)
+VIM:SendKeyEvent(true,key,false,game)
+task.wait(0.05)
+VIM:SendKeyEvent(false,key,false,game)
 
 end
 
-------------------------------------------------
+-------------------------------------------------
+-- M1 SMOOTH
 
-for _,p in ipairs(Players:GetPlayers()) do
-    CreateESP(p)
+local function M1()
+
+if attacking then return end
+attacking = true
+
+VIM:SendMouseButtonEvent(0,0,0,true,game,0)
+task.wait(0.05)
+VIM:SendMouseButtonEvent(0,0,0,false,game,0)
+
+task.wait(0.12)
+
+attacking = false
+
+end
+
+-------------------------------------------------
+-- FIND PLAYER
+
+local function GetTarget()
+
+if not HRP then return nil end
+
+local nearest
+local shortest = math.huge
+
+for _,p in pairs(Players:GetPlayers()) do
+
+if p ~= LP then
+
+local c = p.Character
+local h = c and c:FindFirstChildOfClass("Humanoid")
+local r = c and c:FindFirstChild("HumanoidRootPart")
+
+if c and h and r and h.Health > 0 then
+
+local d = (HRP.Position - r.Position).Magnitude
+
+if d < shortest then
+shortest = d
+nearest = p
+end
+
+end
+
+end
+
+end
+
+return nearest
+
+end
+
+-------------------------------------------------
+-- DOMAIN DETECT
+
+local function InDomain()
+
+if workspace:FindFirstChild("Domain") then
+return true
+end
+
+return false
+
+end
+
+-------------------------------------------------
+-- CHARACTER SETUP
+
+local function SetupCharacter(c)
+
+Char = c
+HRP = c:WaitForChild("HumanoidRootPart")
+
+RunService.Stepped:Connect(function()
+
+for _,v in pairs(Char:GetDescendants()) do
+if v:IsA("BasePart") then
+v.CanCollide = false
+end
+end
+
+end)
+
+end
+
+LP.CharacterAdded:Connect(function(c)
+
+task.wait(1)
+SetupCharacter(c)
+Target = nil
+
+end)
+
+if LP.Character then
+SetupCharacter(LP.Character)
+end
+
+-------------------------------------------------
+-- AUTO FARM LOOP
+
+RunService.Heartbeat:Connect(function()
+
+if not HRP then return end
+
+if tick() - LastDamage > 120 then
+Target = nil
+end
+
+if InDomain() then
+Target = GetTarget()
+else
+if not Target then
+Target = GetTarget()
+end
+end
+
+if not Target then return end
+
+local char = Target.Character
+if not char then Target=nil return end
+
+local enemyHRP = char:FindFirstChild("HumanoidRootPart")
+local hum = char:FindFirstChildOfClass("Humanoid")
+
+if not enemyHRP or not hum then Target=nil return end
+
+if hum.Health <= 0 then
+Target=nil
+return
+end
+
+-------------------------------------------------
+-- MOVE BEHIND PLAYER
+
+local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
+
+HRP.CFrame = HRP.CFrame:Lerp(behind,Smooth)
+HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
+
+-------------------------------------------------
+-- COMBAT
+
+local dist = (HRP.Position - enemyHRP.Position).Magnitude
+
+if dist <= 6 then
+
+press(Enum.KeyCode.R) -- domain
+
+M1()
+
+press(Enum.KeyCode.One)
+press(Enum.KeyCode.Two)
+press(Enum.KeyCode.Three)
+press(Enum.KeyCode.Four)
+
+LastDamage = tick()
+
+end
+
+end)
+
+-------------------------------------------------
+-- ESP SYSTEM
+
+local Camera = workspace.CurrentCamera
+
+local function CreateESP(player)
+
+if player == LP then return end
+
+local function Setup(char)
+
+local hum = char:WaitForChild("Humanoid")
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- BOX
+
+local box = Instance.new("BoxHandleAdornment")
+box.Adornee = hrp
+box.Parent = hrp
+box.Size = Vector3.new(4,6,2)
+box.AlwaysOnTop = true
+box.Transparency = 0.4
+
+-- TEXT
+
+local gui = Instance.new("BillboardGui")
+gui.Parent = hrp
+gui.Size = UDim2.new(0,140,0,30)
+gui.StudsOffset = Vector3.new(0,3,0)
+gui.AlwaysOnTop = true
+
+local text = Instance.new("TextLabel")
+text.Parent = gui
+text.Size = UDim2.new(1,0,1,0)
+text.BackgroundTransparency = 1
+text.TextScaled = true
+text.TextStrokeTransparency = 0
+
+RunService.RenderStepped:Connect(function()
+
+if not char.Parent then return end
+
+local myChar = LP.Character
+if not myChar then return end
+
+local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+if not myHRP then return end
+
+local t = tick()
+
+local color = Color3.new(
+math.sin(t)*0.5+0.5,
+math.sin(t+2)*0.5+0.5,
+math.sin(t+4)*0.5+0.5
+)
+
+box.Color3 = color
+
+local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
+
+text.Text = player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
+
+end)
+
+end
+
+if player.Character then
+Setup(player.Character)
+end
+
+player.CharacterAdded:Connect(Setup)
+
+end
+
+for _,p in pairs(Players:GetPlayers()) do
+CreateESP(p)
 end
 
 Players.PlayerAdded:Connect(CreateESP)
