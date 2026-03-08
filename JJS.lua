@@ -1,4 +1,4 @@
--- Jujutsu Shenanigans FINAL ALL SCRIPT
+-- Jujutsu Shenanigans PERFECT PvP Script
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,16 +9,18 @@ local Char, HRP, Hum
 local Target
 
 local attacking = false
-local LastDamage = tick()
 local LastHealth = 0
+local LastDamage = tick()
 
 ------------------------------------------------
 -- PRESS KEY
 
 local function press(key)
+
 VIM:SendKeyEvent(true,key,false,game)
 task.wait(0.05)
 VIM:SendKeyEvent(false,key,false,game)
+
 end
 
 ------------------------------------------------
@@ -101,8 +103,7 @@ Hum.HealthChanged:Connect(function(h)
 
 if h < LastHealth then
 
-local dir = math.random(1,2)==1 and -8 or 8
-HRP.CFrame = HRP.CFrame * CFrame.new(dir,0,0)
+HRP.CFrame = HRP.CFrame * CFrame.new(math.random(-8,8),0,0)
 
 press(Enum.KeyCode.Q)
 
@@ -115,9 +116,11 @@ end)
 end
 
 LP.CharacterAdded:Connect(function(c)
+
 task.wait(1)
 SetupCharacter(c)
 Target=nil
+
 end)
 
 if LP.Character then
@@ -125,21 +128,18 @@ SetupCharacter(LP.Character)
 end
 
 ------------------------------------------------
--- AIMLOCK
+-- PREDICT BEHIND POSITION
 
-local function Aimlock(enemyHRP)
-HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
+local function GetBehind(enemyHRP)
+
+local predict = enemyHRP.Position + enemyHRP.AssemblyLinearVelocity * 0.2
+
+return CFrame.new(predict) * CFrame.new(0,0,5)
+
 end
 
 ------------------------------------------------
--- AIR COMBO
-
-local function AirCombo(enemyHRP)
-enemyHRP.Velocity = Vector3.new(0,40,0)
-end
-
-------------------------------------------------
--- AUTO FARM
+-- MAIN LOOP
 
 RunService.Heartbeat:Connect(function()
 
@@ -172,21 +172,25 @@ return
 end
 
 ------------------------------------------------
--- MOVE
+-- MOVE PERFECT BEHIND
 
-local behind = enemyHRP.CFrame * CFrame.new(0,0,5)
+local behind = GetBehind(enemyHRP)
 
-local dir = (behind.Position - HRP.Position).Unit
-HRP.AssemblyLinearVelocity = dir * 45
+local dist = (behind.Position - HRP.Position).Magnitude
 
-Aimlock(enemyHRP)
+local speed = math.clamp(dist*2,30,90)
+
+HRP.AssemblyLinearVelocity =
+(behind.Position - HRP.Position).Unit * speed
+
+HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
 
 ------------------------------------------------
 -- COMBAT
 
-local dist = (HRP.Position - enemyHRP.Position).Magnitude
+local distEnemy = (HRP.Position - enemyHRP.Position).Magnitude
 
-if dist <= 6 then
+if distEnemy <= 6 then
 
 press(Enum.KeyCode.R)
 
@@ -197,8 +201,6 @@ press(Enum.KeyCode.Two)
 press(Enum.KeyCode.Three)
 press(Enum.KeyCode.Four)
 
-AirCombo(enemyHRP)
-
 LastDamage = tick()
 
 end
@@ -206,11 +208,11 @@ end
 end)
 
 ------------------------------------------------
--- ESP SYSTEM
+-- ESP
 
 local function CreateESP(player)
 
-if player==LP then return end
+if player == LP then return end
 
 local function Setup(char)
 
@@ -255,7 +257,8 @@ math.sin(t+4)*0.5+0.5
 
 box.Color3 = color
 
-local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
+local dist = math.floor(
+(myHRP.Position - hrp.Position).Magnitude)
 
 text.Text = player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
 
