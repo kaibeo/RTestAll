@@ -1,4 +1,4 @@
--- Jujutsu Shenanigans PERFECT PvP Script
+-- Jujutsu Shenanigans Perfect PvP
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -9,8 +9,9 @@ local Char, HRP, Hum
 local Target
 
 local attacking = false
-local LastHealth = 0
+local comboRunning = false
 local LastDamage = tick()
+local LastHealth = 0
 
 ------------------------------------------------
 -- PRESS KEY
@@ -24,20 +25,59 @@ VIM:SendKeyEvent(false,key,false,game)
 end
 
 ------------------------------------------------
--- M1
+-- M1 SYSTEM
 
-local function M1()
+local function StartM1()
 
 if attacking then return end
 attacking = true
 
+task.spawn(function()
+
+while attacking do
+
 VIM:SendMouseButtonEvent(0,0,0,true,game,0)
-task.wait(0.05)
+task.wait()
 VIM:SendMouseButtonEvent(0,0,0,false,game,0)
 
-task.wait(0.12)
+task.wait(0.08)
 
+end
+
+end)
+
+end
+
+local function StopM1()
 attacking = false
+end
+
+------------------------------------------------
+-- SKILL COMBO
+
+local function Combo()
+
+if comboRunning then return end
+comboRunning = true
+
+task.spawn(function()
+
+press(Enum.KeyCode.One)
+task.wait(0.4)
+
+press(Enum.KeyCode.Two)
+task.wait(0.4)
+
+press(Enum.KeyCode.Three)
+task.wait(0.4)
+
+press(Enum.KeyCode.Four)
+
+task.wait(1)
+
+comboRunning = false
+
+end)
 
 end
 
@@ -99,6 +139,8 @@ end
 
 end)
 
+-- DODGE WHEN HIT
+
 Hum.HealthChanged:Connect(function(h)
 
 if h < LastHealth then
@@ -128,11 +170,13 @@ SetupCharacter(LP.Character)
 end
 
 ------------------------------------------------
--- PREDICT BEHIND POSITION
+-- PREDICT POSITION
 
 local function GetBehind(enemyHRP)
 
-local predict = enemyHRP.Position + enemyHRP.AssemblyLinearVelocity * 0.2
+local predict =
+enemyHRP.Position +
+enemyHRP.AssemblyLinearVelocity * 0.2
 
 return CFrame.new(predict) * CFrame.new(0,0,5)
 
@@ -172,7 +216,7 @@ return
 end
 
 ------------------------------------------------
--- MOVE PERFECT BEHIND
+-- MOVE BEHIND
 
 local behind = GetBehind(enemyHRP)
 
@@ -183,25 +227,28 @@ local speed = math.clamp(dist*2,30,90)
 HRP.AssemblyLinearVelocity =
 (behind.Position - HRP.Position).Unit * speed
 
-HRP.CFrame = CFrame.lookAt(HRP.Position,enemyHRP.Position)
+HRP.CFrame =
+CFrame.lookAt(HRP.Position,enemyHRP.Position)
 
 ------------------------------------------------
 -- COMBAT
 
-local distEnemy = (HRP.Position - enemyHRP.Position).Magnitude
+local distEnemy =
+(HRP.Position - enemyHRP.Position).Magnitude
 
 if distEnemy <= 6 then
 
 press(Enum.KeyCode.R)
 
-M1()
+StartM1()
 
-press(Enum.KeyCode.One)
-press(Enum.KeyCode.Two)
-press(Enum.KeyCode.Three)
-press(Enum.KeyCode.Four)
+Combo()
 
 LastDamage = tick()
+
+else
+
+StopM1()
 
 end
 
@@ -244,23 +291,16 @@ RunService.RenderStepped:Connect(function()
 local myChar = LP.Character
 if not myChar then return end
 
-local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+local myHRP =
+myChar:FindFirstChild("HumanoidRootPart")
+
 if not myHRP then return end
 
-local t = tick()
+local dist =
+math.floor((myHRP.Position - hrp.Position).Magnitude)
 
-local color = Color3.new(
-math.sin(t)*0.5+0.5,
-math.sin(t+2)*0.5+0.5,
-math.sin(t+4)*0.5+0.5
-)
-
-box.Color3 = color
-
-local dist = math.floor(
-(myHRP.Position - hrp.Position).Magnitude)
-
-text.Text = player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
+text.Text =
+player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
 
 end)
 
