@@ -1,285 +1,245 @@
--- Jujutsu Shenanigans Full PvP Fly Script
+local _version = "1.6.63"
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/download/" .. _version .. "/main.lua"))()
+
+WindUI:AddTheme({
+    Name = "Dark",
+    Accent = Color3.fromHex("#18181b"),
+    Background = Color3.fromHex("#101010"),
+    Outline = Color3.fromHex("#FFFFFF"),
+    Text = Color3.fromHex("#FFFFFF"),
+    Placeholder = Color3.fromHex("#7a7a7a"),
+    Button = Color3.fromHex("#52525b"),
+    Icon = Color3.fromHex("#a1a1aa"),
+})
+
+local Window = WindUI:CreateWindow({
+    Title = "Ziner Hub | JuJutsu Shenanigans",
+    Icon = "rbxassetid://140139922076121",
+    Author = "Version: <font color=\"#FFD700\">FREEMIUM</font>",
+    Folder = "bet",
+    Size = UDim2.fromOffset(580,460),
+    MinSize = Vector2.new(560,350),
+    MaxSize = Vector2.new(850,560),
+    Transparent = true,
+    Theme = "Dark",
+    Resizable = true,
+    SideBarWidth = 200,
+    HideSearchBar = true,
+    ScrollBarEnabled = false,
+    User = {Enabled = true}
+})
+
+local Infotab = Window:Tab({
+    Title = "Tab Information",
+    Icon = "info",
+    Border = true
+})
+
+local Hoptab = Window:Tab({
+    Title = "Tab Farming",
+    Icon = "person-standing",
+    Border = true
+})
+
+Window:EditOpenButton({
+    Title = "Click Here To Open",
+    Icon = "rbxassetid://140139922076121",
+    CornerRadius = UDim.new(1),
+    StrokeThickness = 2,
+    Color = ColorSequence.new(
+        Color3.fromHex("#EFBA54"),
+        Color3.fromHex("#000000")
+    ),
+    Enabled = true
+})
+
+------------------------------------------------
+-- SERVICES
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local VIM = game:GetService("VirtualInputManager")
 
 local LP = Players.LocalPlayer
-local Char, HRP, Hum
+
+------------------------------------------------
+-- VARIABLES
+
+local FlyFarm = false
+local AutoCombo = false
+local ESP = false
+
 local Target
 
-local FlySpeed = 200
-local Delay = 0.1
-
-local attacking = false
-local LastHealth = 0
-
 ------------------------------------------------
--- PRESS KEY
-
-local function press(key)
-
-VIM:SendKeyEvent(true,key,false,game)
-task.wait(0.05)
-VIM:SendKeyEvent(false,key,false,game)
-
-end
-
-------------------------------------------------
--- M1 SYSTEM
-
-local function StartM1()
-
-if attacking then return end
-attacking = true
-
-task.spawn(function()
-
-while attacking do
-
-VIM:SendMouseButtonEvent(0,0,0,true,game,0)
-task.wait()
-VIM:SendMouseButtonEvent(0,0,0,false,game,0)
-
-task.wait(0.08)
-
-end
-
-end)
-
-end
-
-local function StopM1()
-attacking = false
-end
-
-------------------------------------------------
--- FIND TARGET
+-- TARGET AI
 
 local function GetTarget()
 
-local nearest
-local shortest = math.huge
+    local Char = LP.Character
+    if not Char then return end
 
-for _,p in pairs(Players:GetPlayers()) do
+    local HRP = Char:FindFirstChild("HumanoidRootPart")
+    if not HRP then return end
 
-if p ~= LP then
+    local nearest
+    local dist = math.huge
 
-local c = p.Character
-local h = c and c:FindFirstChildOfClass("Humanoid")
-local r = c and c:FindFirstChild("HumanoidRootPart")
+    for _,p in pairs(Players:GetPlayers()) do
 
-if c and h and r and h.Health > 0 then
+        if p ~= LP then
 
-local d = (HRP.Position - r.Position).Magnitude
+            local c = p.Character
+            local hum = c and c:FindFirstChildOfClass("Humanoid")
+            local hrp = c and c:FindFirstChild("HumanoidRootPart")
 
-if d < shortest then
-shortest = d
-nearest = p
-end
+            if c and hum and hrp and hum.Health > 0 then
 
-end
+                local d = (HRP.Position - hrp.Position).Magnitude
 
-end
+                if d < dist then
+                    dist = d
+                    nearest = p
+                end
 
-end
+            end
 
-return nearest
+        end
+
+    end
+
+    return nearest
 
 end
 
 ------------------------------------------------
--- SETUP CHARACTER
+-- FLY FARM
 
-local function SetupCharacter(c)
-
-Char = c
-HRP = c:WaitForChild("HumanoidRootPart")
-Hum = c:WaitForChild("Humanoid")
-
-LastHealth = Hum.Health
-
-------------------------------------------------
--- Noclip
-
-RunService.Stepped:Connect(function()
-
-for _,v in pairs(Char:GetDescendants()) do
-if v:IsA("BasePart") then
-v.CanCollide = false
-end
-end
-
-end)
+Hoptab:Toggle({
+    Title = "Fly Farm",
+    Default = false,
+    Callback = function(v)
+        FlyFarm = v
+    end
+})
 
 ------------------------------------------------
--- Dodge khi bị đánh
+-- AUTO COMBO
 
-Hum.HealthChanged:Connect(function(h)
+local function press(key)
 
-if h < LastHealth then
-
-HRP.CFrame = HRP.CFrame * CFrame.new(math.random(-8,8),0,0)
-
-press(Enum.KeyCode.Q)
+    VIM:SendKeyEvent(true,key,false,game)
+    task.wait(0.05)
+    VIM:SendKeyEvent(false,key,false,game)
 
 end
 
-LastHealth = h
-
-end)
-
-------------------------------------------------
--- Fly system
-
-local attachment = Instance.new("Attachment")
-attachment.Parent = HRP
-
-local velocity = Instance.new("LinearVelocity")
-velocity.Attachment0 = attachment
-velocity.MaxForce = math.huge
-velocity.VectorVelocity = Vector3.zero
-velocity.Parent = HRP
+Hoptab:Toggle({
+    Title = "Auto Combo",
+    Default = false,
+    Callback = function(v)
+        AutoCombo = v
+    end
+})
 
 ------------------------------------------------
--- MAIN LOOP
+-- MAIN FARM LOOP
 
 RunService.Heartbeat:Connect(function()
 
-if not HRP then return end
+    if not FlyFarm then return end
 
-if not Target then
-Target = GetTarget()
-end
+    local Char = LP.Character
+    if not Char then return end
 
-if not Target then return end
+    local HRP = Char:FindFirstChild("HumanoidRootPart")
+    if not HRP then return end
 
-local enemy = Target.Character
-if not enemy then Target=nil return end
+    if not Target then
+        Target = GetTarget()
+    end
 
-local enemyHRP = enemy:FindFirstChild("HumanoidRootPart")
-local enemyHum = enemy:FindFirstChildOfClass("Humanoid")
+    if not Target then return end
 
-if not enemyHRP or not enemyHum then
-Target=nil
-return
-end
+    local enemy = Target.Character
+    if not enemy then Target=nil return end
 
-if enemyHum.Health <= 0 then
-Target=nil
-return
-end
+    local enemyHRP = enemy:FindFirstChild("HumanoidRootPart")
+    local enemyHum = enemy:FindFirstChildOfClass("Humanoid")
 
-------------------------------------------------
--- LOCK SAU LƯNG
+    if not enemyHRP or not enemyHum then
+        Target=nil
+        return
+    end
 
-local behind =
-enemyHRP.Position -
-enemyHRP.CFrame.LookVector * 3
+    if enemyHum.Health <= 0 then
+        Target=nil
+        return
+    end
 
-local direction =
-(behind - HRP.Position).Unit
+    local behind = enemyHRP.Position - enemyHRP.CFrame.LookVector * 3
 
-velocity.VectorVelocity =
-direction * FlySpeed
+    HRP.CFrame = CFrame.new(behind, enemyHRP.Position)
 
-HRP.CFrame =
-CFrame.lookAt(HRP.Position, enemyHRP.Position)
+    if AutoCombo then
 
-------------------------------------------------
--- COMBAT
+        VIM:SendMouseButtonEvent(0,0,0,true,game,0)
+        task.wait()
+        VIM:SendMouseButtonEvent(0,0,0,false,game,0)
 
-local dist =
-(HRP.Position - enemyHRP.Position).Magnitude
+        press(Enum.KeyCode.One)
+        press(Enum.KeyCode.Two)
+        press(Enum.KeyCode.Three)
+        press(Enum.KeyCode.Four)
 
-if dist <= 6 then
-
-press(Enum.KeyCode.R)
-
-StartM1()
-
-press(Enum.KeyCode.One)
-press(Enum.KeyCode.Two)
-press(Enum.KeyCode.Three)
-press(Enum.KeyCode.Four)
-
-else
-
-StopM1()
-
-end
+    end
 
 end)
 
-end
-
 ------------------------------------------------
+-- BOX ESP
 
-LP.CharacterAdded:Connect(function(c)
-
-task.wait(1)
-SetupCharacter(c)
-Target=nil
-
-end)
-
-if LP.Character then
-SetupCharacter(LP.Character)
-end
-
-------------------------------------------------
--- ESP
+Infotab:Toggle({
+    Title = "Box ESP",
+    Default = false,
+    Callback = function(v)
+        ESP = v
+    end
+})
 
 local function CreateESP(player)
 
-if player == LP then return end
+    if player == LP then return end
 
-local function Setup(char)
+    local function Setup(char)
 
-local hum = char:WaitForChild("Humanoid")
-local hrp = char:WaitForChild("HumanoidRootPart")
+        local hrp = char:WaitForChild("HumanoidRootPart")
 
-local gui = Instance.new("BillboardGui")
-gui.Parent = hrp
-gui.Size = UDim2.new(0,120,0,25)
-gui.StudsOffset = Vector3.new(0,3,0)
-gui.AlwaysOnTop = true
+        local box = Instance.new("BoxHandleAdornment")
+        box.Adornee = hrp
+        box.Parent = hrp
+        box.Size = Vector3.new(4,6,2)
+        box.Transparency = 0.4
+        box.AlwaysOnTop = true
 
-local text = Instance.new("TextLabel")
-text.Parent = gui
-text.Size = UDim2.new(1,0,1,0)
-text.BackgroundTransparency = 1
-text.TextScaled = true
-text.TextStrokeTransparency = 0
+        RunService.RenderStepped:Connect(function()
 
-RunService.RenderStepped:Connect(function()
+            box.Visible = ESP
 
-local myChar = LP.Character
-if not myChar then return end
+        end)
 
-local myHRP = myChar:FindFirstChild("HumanoidRootPart")
-if not myHRP then return end
+    end
 
-local dist =
-math.floor((myHRP.Position - hrp.Position).Magnitude)
+    if player.Character then
+        Setup(player.Character)
+    end
 
-text.Text =
-player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
-
-end)
-
-end
-
-if player.Character then
-Setup(player.Character)
-end
-
-player.CharacterAdded:Connect(Setup)
+    player.CharacterAdded:Connect(Setup)
 
 end
 
 for _,p in pairs(Players:GetPlayers()) do
-CreateESP(p)
+    CreateESP(p)
 end
 
 Players.PlayerAdded:Connect(CreateESP)
