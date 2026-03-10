@@ -35,8 +35,14 @@ local Infotab = Window:Tab({
     Border = true
 })
 
-local Hoptab = Window:Tab({
+local Farmtab = Window:Tab({
     Title = "Tab Farming",
+    Icon = "person-standing",
+    Border = true
+})
+
+local Stftab = Window:Tab({
+    Title = "Tab Setting Farm",
     Icon = "person-standing",
     Border = true
 })
@@ -264,7 +270,7 @@ end)
 ------------------------------------------------
 -- BOX ESP
 
-Infotab:Toggle({
+Stftab:Toggle({
     Title = "Box ESP",
     Default = false,
     Callback = function(v)
