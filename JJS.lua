@@ -112,6 +112,71 @@ local function GetTarget()
 
 end
 
+local function GetTarget()
+
+    local Char = LP.Character
+    if not Char then return end
+
+    local HRP = Char:FindFirstChild("HumanoidRootPart")
+    if not HRP then return end
+
+    local nearest
+    local dist = math.huge
+
+    for _,p in pairs(Players:GetPlayers()) do
+
+        if p ~= LP then
+
+            local c = p.Character
+            local hum = c and c:FindFirstChildOfClass("Humanoid")
+            local hrp = c and c:FindFirstChild("HumanoidRootPart")
+
+            if c and hum and hrp and hum.Health > 0 then
+
+                local d = (HRP.Position - hrp.Position).Magnitude
+
+                if d < dist then
+                    dist = d
+                    nearest = p
+                end
+
+            end
+
+        end
+
+    end
+
+    return nearest
+
+end
+
+if not Target then
+    Target = GetTarget()
+end
+
+if Target then
+
+    local enemy = Target.Character
+
+    if not enemy then
+        Target = nil
+        return
+    end
+
+    local hum = enemy:FindFirstChildOfClass("Humanoid")
+
+    if not hum or hum.Health <= 0 then
+        Target = nil
+        return
+    end
+
+    if not Players:FindFirstChild(Target.Name) then
+        Target = nil
+        return
+    end
+
+end
+
 ------------------------------------------------
 -- FLY FARM
 
@@ -209,10 +274,11 @@ Infotab:Toggle({
 
 local function CreateESP(player)
 
-    if player == LP then return end
+    if player == Players.LocalPlayer then return end
 
     local function Setup(char)
 
+        local hum = char:WaitForChild("Humanoid")
         local hrp = char:WaitForChild("HumanoidRootPart")
 
         local box = Instance.new("BoxHandleAdornment")
@@ -222,9 +288,39 @@ local function CreateESP(player)
         box.Transparency = 0.4
         box.AlwaysOnTop = true
 
+        local gui = Instance.new("BillboardGui")
+        gui.Parent = hrp
+        gui.Size = UDim2.new(0,160,0,25)
+        gui.StudsOffset = Vector3.new(0,3,0)
+        gui.AlwaysOnTop = true
+
+        local text = Instance.new("TextLabel")
+        text.Parent = gui
+        text.Size = UDim2.new(1,0,1,0)
+        text.BackgroundTransparency = 1
+        text.TextScaled = true
+        text.TextStrokeTransparency = 0
+
         RunService.RenderStepped:Connect(function()
 
-            box.Visible = ESP
+            if not ESPEnabled then
+                box.Visible = false
+                gui.Enabled = false
+                return
+            end
+
+            box.Visible = true
+            gui.Enabled = true
+
+            local myChar = Players.LocalPlayer.Character
+            if not myChar then return end
+
+            local myHRP = myChar:FindFirstChild("HumanoidRootPart")
+            if not myHRP then return end
+
+            local dist = math.floor((myHRP.Position - hrp.Position).Magnitude)
+
+            text.Text = player.Name.." | "..math.floor(hum.Health).." | "..dist.."m"
 
         end)
 
