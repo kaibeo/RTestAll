@@ -1,91 +1,76 @@
 -- =============================================
--- AUTO BOUNTY HUB - Bản giống hệt ảnh cuối
--- Code bởi Grok cho mày (copy paste nguyên đoạn này)
--- Dùng LocalScript trong StarterPlayer > StarterPlayerScripts
--- Hoặc Executor (Synapse, Fluxus, v.v.)
+-- AUTO BOUNTY HUB UI (CHỈ UI THUẦN - KHÔNG CÓ CODE CHỨC NĂNG)
+-- Copy paste nguyên đoạn này vào LocalScript hoặc Executor
+-- Giống y chang ảnh cuối cùng mày gửi (đã bỏ status moon %)
 -- =============================================
 
-local Players = game:GetService("Players")
-local TweenService = game:GetService("TweenService")
-local player = Players.LocalPlayer
-
--- Tạo ScreenGui
+local player = game.Players.LocalPlayer
 local screenGui = Instance.new("ScreenGui")
-screenGui.Name = "AutoBountyHub"
+screenGui.Name = "AutoBountyHubUI"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
--- Main Frame (đen nền giống game)
+-- Main Frame
 local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
 mainFrame.Size = UDim2.new(1, 0, 1, 0)
-mainFrame.Position = UDim2.new(0, 0, 0, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 mainFrame.BackgroundTransparency = 0.05
 mainFrame.BorderSizePixel = 0
 mainFrame.Parent = screenGui
 
 -- =============================================
--- PHẦN TRÊN (Roblox top bar + icons)
+-- TOP BAR
 -- =============================================
 local topBar = Instance.new("Frame")
-topBar.Name = "TopBar"
 topBar.Size = UDim2.new(1, 0, 0, 50)
 topBar.BackgroundTransparency = 1
 topBar.Parent = mainFrame
 
--- Roblox logo
 local robloxLogo = Instance.new("ImageLabel")
 robloxLogo.Size = UDim2.new(0, 40, 0, 40)
 robloxLogo.Position = UDim2.new(0, 20, 0, 5)
 robloxLogo.BackgroundTransparency = 1
-robloxLogo.Image = "rbxassetid://357249130" -- Roblox icon
+robloxLogo.Image = "rbxassetid://357249130"
 robloxLogo.Parent = topBar
 
--- Menu icon
 local menuIcon = Instance.new("TextButton")
 menuIcon.Size = UDim2.new(0, 40, 0, 40)
 menuIcon.Position = UDim2.new(0, 80, 0, 5)
 menuIcon.BackgroundTransparency = 1
 menuIcon.Text = "≡"
-menuIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+menuIcon.TextColor3 = Color3.fromRGB(255,255,255)
 menuIcon.TextScaled = true
 menuIcon.Font = Enum.Font.GothamBold
 menuIcon.Parent = topBar
 
--- Chat icon
 local chatIcon = Instance.new("TextButton")
 chatIcon.Size = UDim2.new(0, 40, 0, 40)
 chatIcon.Position = UDim2.new(0, 130, 0, 5)
 chatIcon.BackgroundTransparency = 1
 chatIcon.Text = "💬"
-chatIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+chatIcon.TextColor3 = Color3.fromRGB(255,255,255)
 chatIcon.TextScaled = true
 chatIcon.Font = Enum.Font.GothamBold
 chatIcon.Parent = topBar
 
 -- =============================================
--- LEFT SIDE (Menu, Cấp, Money)
+-- LEFT PANEL
 -- =============================================
 local leftPanel = Instance.new("Frame")
-leftPanel.Name = "LeftPanel"
 leftPanel.Size = UDim2.new(0, 180, 1, 0)
 leftPanel.Position = UDim2.new(0, 20, 0, 60)
 leftPanel.BackgroundTransparency = 1
 leftPanel.Parent = mainFrame
 
--- Compass + icon
 local compass = Instance.new("ImageLabel")
 compass.Size = UDim2.new(0, 60, 0, 60)
 compass.Position = UDim2.new(0, 0, 0, 0)
 compass.BackgroundTransparency = 1
-compass.Image = "rbxassetid://3926305904" -- compass icon (có thể thay)
+compass.Image = "rbxassetid://3926305904"
 compass.Parent = leftPanel
 
--- Menu button
 local menuBtn = Instance.new("TextButton")
-menuBtn.Name = "MenuBtn"
 menuBtn.Size = UDim2.new(0, 150, 0, 40)
 menuBtn.Position = UDim2.new(0, 0, 0, 80)
 menuBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
@@ -105,7 +90,6 @@ menuNotif.TextScaled = true
 menuNotif.Font = Enum.Font.GothamBold
 menuNotif.Parent = menuBtn
 
--- Level
 local levelLabel = Instance.new("TextLabel")
 levelLabel.Size = UDim2.new(0, 150, 0, 30)
 levelLabel.Position = UDim2.new(0, 0, 0, 130)
@@ -116,7 +100,6 @@ levelLabel.TextScaled = true
 levelLabel.Font = Enum.Font.GothamBold
 levelLabel.Parent = leftPanel
 
--- Money
 local moneyLabel = Instance.new("TextLabel")
 moneyLabel.Size = UDim2.new(0, 150, 0, 30)
 moneyLabel.Position = UDim2.new(0, 0, 0, 170)
@@ -131,15 +114,12 @@ moneyLabel.Parent = leftPanel
 -- CENTER CONTENT
 -- =============================================
 local centerFrame = Instance.new("Frame")
-centerFrame.Name = "CenterFrame"
 centerFrame.Size = UDim2.new(0.55, 0, 0.8, 0)
 centerFrame.Position = UDim2.new(0.25, 0, 0.12, 0)
 centerFrame.BackgroundTransparency = 1
 centerFrame.Parent = mainFrame
 
--- Title
 local title = Instance.new("TextLabel")
-title.Name = "Title"
 title.Size = UDim2.new(1, 0, 0, 60)
 title.BackgroundTransparency = 1
 title.Text = "Auto Bounty Hub"
@@ -148,7 +128,6 @@ title.TextScaled = true
 title.Font = Enum.Font.GothamBlack
 title.Parent = centerFrame
 
--- Timer chính
 local mainTimer = Instance.new("TextLabel")
 mainTimer.Size = UDim2.new(1, 0, 0, 40)
 mainTimer.Position = UDim2.new(0, 0, 0, 60)
@@ -159,7 +138,6 @@ mainTimer.TextScaled = true
 mainTimer.Font = Enum.Font.GothamBold
 mainTimer.Parent = centerFrame
 
--- Username
 local username = Instance.new("TextLabel")
 username.Size = UDim2.new(1, 0, 0, 30)
 username.Position = UDim2.new(0, 0, 0, 100)
@@ -218,26 +196,25 @@ energyText.TextScaled = true
 energyText.Font = Enum.Font.GothamBold
 energyText.Parent = energyFrame
 
--- Fist icon + Blue creature
+-- Fist + Creature
 local fistIcon = Instance.new("ImageLabel")
 fistIcon.Size = UDim2.new(0, 60, 0, 60)
 fistIcon.Position = UDim2.new(0.1, 0, 0, 180)
 fistIcon.BackgroundTransparency = 1
-fistIcon.Image = "rbxassetid://3926307971" -- fist
+fistIcon.Image = "rbxassetid://3926307971"
 fistIcon.Parent = centerFrame
 
 local creatureIcon = Instance.new("ImageLabel")
 creatureIcon.Size = UDim2.new(0, 80, 0, 80)
 creatureIcon.Position = UDim2.new(0.35, 0, 0, 170)
 creatureIcon.BackgroundTransparency = 1
-creatureIcon.Image = "rbxassetid://1234567890" -- thay bằng ID creature thật nếu mày có
+creatureIcon.Image = "rbxassetid://1234567890" -- thay ID creature nếu mày có
 creatureIcon.Parent = centerFrame
 
 -- =============================================
--- AUTO BOUNTY FEATURES PANEL (phần mới)
+-- AUTO BOUNTY FEATURES PANEL
 -- =============================================
 local featurePanel = Instance.new("Frame")
-featurePanel.Name = "FeaturePanel"
 featurePanel.Size = UDim2.new(0.95, 0, 0, 220)
 featurePanel.Position = UDim2.new(0.025, 0, 0, 280)
 featurePanel.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
@@ -299,7 +276,7 @@ tgSkip.TextScaled = true
 tgSkip.Font = Enum.Font.Gotham
 tgSkip.Parent = featurePanel
 
--- Right column buttons
+-- Right column buttons (chỉ UI, không có chức năng)
 local nextPlayerBtn = Instance.new("TextButton")
 nextPlayerBtn.Size = UDim2.new(0.45, 0, 0, 55)
 nextPlayerBtn.Position = UDim2.new(0.52, 0, 0, 50)
@@ -309,11 +286,6 @@ nextPlayerBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
 nextPlayerBtn.TextScaled = true
 nextPlayerBtn.Font = Enum.Font.GothamBold
 nextPlayerBtn.Parent = featurePanel
-
-nextPlayerBtn.MouseButton1Click:Connect(function()
-    print("✅ Next Player clicked!")
-    -- Thêm code auto bounty next player ở đây
-end)
 
 local hopServerBtn = Instance.new("TextButton")
 hopServerBtn.Size = UDim2.new(0.45, 0, 0, 55)
@@ -325,16 +297,10 @@ hopServerBtn.TextScaled = true
 hopServerBtn.Font = Enum.Font.GothamBold
 hopServerBtn.Parent = featurePanel
 
-hopServerBtn.MouseButton1Click:Connect(function()
-    print("✅ Hop Server clicked!")
-    -- Thêm code hop server ở đây
-end)
-
 -- =============================================
--- RIGHT SIDE BOX (Auto Bounty White Screen)
+-- RIGHT BOX
 -- =============================================
 local rightBox = Instance.new("Frame")
-rightBox.Name = "WhiteScreenBox"
 rightBox.Size = UDim2.new(0, 220, 0, 80)
 rightBox.Position = UDim2.new(1, -250, 0, 80)
 rightBox.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -346,7 +312,7 @@ local boxIcon = Instance.new("ImageLabel")
 boxIcon.Size = UDim2.new(0, 50, 0, 50)
 boxIcon.Position = UDim2.new(0, 10, 0.5, -25)
 boxIcon.BackgroundTransparency = 1
-boxIcon.Image = "rbxassetid://3926307971" -- lightning icon (có thể thay)
+boxIcon.Image = "rbxassetid://3926307971"
 boxIcon.Parent = rightBox
 
 local boxText = Instance.new("TextLabel")
@@ -372,5 +338,3 @@ versionLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
 versionLabel.TextScaled = true
 versionLabel.Font = Enum.Font.Gotham
 versionLabel.Parent = mainFrame
-
-print("🚀 Auto Bounty Hub đã load xong! Giống y chang ảnh mày gửi.")
