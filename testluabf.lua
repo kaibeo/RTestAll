@@ -2313,7 +2313,12 @@ local Load = loadstring(game:HttpGet("https://raw.githubusercontent.com/Dex-Bear
 
 task.spawn(function()
     while task.wait(0.03) do
-        Load:Attack()
+        if Load and typeof(Load) == "table" then
+            pcall(function()
+                Load:Attack()
+            end)
+        end
+        task.wait(0.03)
     end
 end)
 
